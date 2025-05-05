@@ -7,10 +7,13 @@
 import numpy as np
 
 
-def criarListaComponentes(netlist):
-    componentes = []
+def insert_mna_stamps(netlist_filename):
+    componentes_local = []
+    n_max_node = 0
+    mna_counts = {'V': 0, 'E': 0, 'H': 0, 'B': 0, 'F': 0}
+    comp_indices = {'V': {}, 'E': {}, 'H': {}, 'B': {}, 'F': {}}
 
-    with open(netlist, 'r', encoding='utf-8') as f:
+    with open(netlist_filename, 'r', encoding='utf-8') as f:
         for linha in f:
             linha = linha.strip()
             if not linha or linha.startswith("*"):
@@ -21,58 +24,53 @@ def criarListaComponentes(netlist):
 
             comp_name = listaLinha[0]
             comp_type = comp_name[0].upper()
-            componente = [comp_name]
+            componente_parsed = [comp_name]
 
             if comp_type == 'R':
-                componente.extend([int(listaLinha[1]), int(listaLinha[2]), float(listaLinha[3])])
+                n1, n2, valorR = int(listaLinha[1]), int(listaLinha[2]), float(listaLinha[3])
+                componente_parsed.extend([n1, n2, valorR])
+                n_max_node = max(n_max_node, n1, n2)
             elif comp_type == 'G':
-                componente.extend([int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), float(listaLinha[5])])
+                nI1, nI2, nVp, nVn, gm = int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), float(listaLinha[5])
+                componente_parsed.extend([nI1, nI2, nVp, nVn, gm])
+                n_max_node = max(n_max_node, nI1, nI2, nVp, nVn)
             elif comp_type == 'I':
-                componente.extend([int(listaLinha[1]), int(listaLinha[2]), float(listaLinha[4])])
+                n1, n2, valorI = int(listaLinha[1]), int(listaLinha[2]), float(listaLinha[4])
+                componente_parsed.extend([n1, n2, valorI])
+                n_max_node = max(n_max_node, n1, n2)
             elif comp_type == 'V':
-                componente.extend([int(listaLinha[1]), int(listaLinha[2]), float(listaLinha[4])])
+                np_v, nm_v, valorV = int(listaLinha[1]), int(listaLinha[2]), float(listaLinha[4])
+                componente_parsed.extend([np_v, nm_v, valorV])
+                n_max_node = max(n_max_node, np_v, nm_v)
             elif comp_type == 'E':
-                componente.extend([int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), float(listaLinha[5])])
+                np_e, nm_e, nCp, nCn, av = int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), float(listaLinha[5])
+                componente_parsed.extend([np_e, nm_e, nCp, nCn, av])
+                n_max_node = max(n_max_node, np_e, nm_e, nCp, nCn)
             elif comp_type == 'F':
-                componente.extend([int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), float(listaLinha[5])])
+                nIplus, nIminus, nCc_f, nCd_f, beta = int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), float(listaLinha[5])
+                componente_parsed.extend([nIplus, nIminus, nCc_f, nCd_f, beta])
+                n_max_node = max(n_max_node, nIplus, nIminus, nCc_f, nCd_f)
             elif comp_type == 'H':
-                componente.extend([int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), float(listaLinha[5])])
+                nVplus, nVminus, nCc_h, nCd_h, rm = int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), float(listaLinha[5])
+                componente_parsed.extend([nVplus, nVminus, nCc_h, nCd_h, rm])
+                n_max_node = max(n_max_node, nVplus, nVminus, nCc_h, nCd_h)
             elif comp_type == 'A':
-                componente.extend([int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]),
-                                   float(listaLinha[5]), float(listaLinha[6]), float(listaLinha[7]), float(listaLinha[8]), float(listaLinha[9])])
+                na_a, nb_a, nc_a, nd_a, k1_a, k2_a, k3_a, k4_a, k5_a = int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), float(listaLinha[5]), float(listaLinha[6]), float(listaLinha[7]), float(listaLinha[8]), float(listaLinha[9])
+                componente_parsed.extend([na_a, nb_a, nc_a, nd_a, k1_a, k2_a, k3_a, k4_a, k5_a])
+                n_max_node = max(n_max_node, na_a, nb_a, nc_a, nd_a)
             elif comp_type == 'B':
-                 componente.extend([int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), int(listaLinha[5]), int(listaLinha[6]),
-                                    float(listaLinha[7]), float(listaLinha[8]), float(listaLinha[9]), float(listaLinha[10]), float(listaLinha[11]), float(listaLinha[12]), float(listaLinha[13]), float(listaLinha[14])])
+                na_b, nb_b, nc_b, nd_b, ne_b, nf_b, k1_b, k2_b, k3_b, k4_b, k5_b, k6_b, k7_b, k8_b = int(listaLinha[1]), int(listaLinha[2]), int(listaLinha[3]), int(listaLinha[4]), int(listaLinha[5]), int(listaLinha[6]), float(listaLinha[7]), float(listaLinha[8]), float(listaLinha[9]), float(listaLinha[10]), float(listaLinha[11]), float(listaLinha[12]), float(listaLinha[13]), float(listaLinha[14])
+                componente_parsed.extend([na_b, nb_b, nc_b, nd_b, ne_b, nf_b, k1_b, k2_b, k3_b, k4_b, k5_b, k6_b, k7_b, k8_b])
+                n_max_node = max(n_max_node, na_b, nb_b, nc_b, nd_b, ne_b, nf_b)
             else:
-                 pass
+                pass
 
-            componentes.append(componente)
+            if comp_type in mna_counts:
+                 comp_indices[comp_type][comp_name] = mna_counts[comp_type]
+                 mna_counts[comp_type] += 1
 
-    return componentes
+            componentes_local.append(componente_parsed)
 
-
-def count_mna_info(componentes):
-    n_max_node = 0
-    mna_counts = {'V': 0, 'E': 0, 'H': 0, 'B': 0, 'F': 0}
-    comp_indices = {'V': {}, 'E': {}, 'H': {}, 'B': {}, 'F': {}}
-
-    for componente in componentes:
-        comp_name = componente[0]
-        comp_type = comp_name[0].upper()
-
-        for param in componente[1:]:
-            if isinstance(param, int):
-                if param > n_max_node:
-                    n_max_node = param
-
-        if comp_type in mna_counts:
-             comp_indices[comp_type][comp_name] = mna_counts[comp_type]
-             mna_counts[comp_type] += 1
-
-    return n_max_node, mna_counts, comp_indices
-
-
-def insert_mna_stamps(n_max_node, mna_counts, componentes, comp_indices):
     num_nodes = n_max_node + 1
 
     num_extra_vars = (mna_counts['V'] + mna_counts['E'] + mna_counts['B'] +
@@ -106,7 +104,7 @@ def insert_mna_stamps(n_max_node, mna_counts, componentes, comp_indices):
     h_ctrl_def_row_offset = f_ctrl_def_row_offset + mna_counts['F']
 
 
-    for elemento in componentes:
+    for elemento in componentes_local:
         comp_name = elemento[0]
         comp_type = comp_name[0].upper()
 
@@ -131,36 +129,36 @@ def insert_mna_stamps(n_max_node, mna_counts, componentes, comp_indices):
              A[nI2][nVn] += gm
 
         elif comp_type == 'V':
-            np, nm, valorV = elemento[1], elemento[2], elemento[3]
+            np_v, nm_v, valorV = elemento[1], elemento[2], elemento[3]
             v_idx = comp_indices['V'][comp_name]
 
             v_curr_var_col = v_curr_col_offset + v_idx
             v_constr_eq_row = v_constr_row_offset + v_idx
 
-            A[np][v_curr_var_col] += 1
-            A[nm][v_curr_var_col] -= 1
+            A[np_v][v_curr_var_col] += 1
+            A[nm_v][v_curr_var_col] -= 1
 
-            A[v_constr_eq_row][np] += 1
-            A[v_constr_eq_row][nm] -= 1
+            A[v_constr_eq_row][np_v] += 1
+            A[v_constr_eq_row][nm_v] -= 1
             b[v_constr_eq_row][0] += valorV
 
         elif comp_type == 'E':
-             np, nm, nCp, nCn, av = elemento[1], elemento[2], elemento[3], elemento[4], elemento[5]
+             np_e, nm_e, nCp, nCn, av = elemento[1], elemento[2], elemento[3], elemento[4], elemento[5]
              e_idx = comp_indices['E'][comp_name]
 
              e_curr_var_col = e_curr_col_offset + e_idx
              e_constr_eq_row = e_constr_row_offset + e_idx
 
-             A[np][e_curr_var_col] += 1
-             A[nm][e_curr_var_col] -= 1
+             A[np_e][e_curr_var_col] += 1
+             A[nm_e][e_curr_var_col] -= 1
 
-             A[e_constr_eq_row][np] += 1
-             A[e_constr_eq_row][nm] -= 1
+             A[e_constr_eq_row][np_e] += 1
+             A[e_constr_eq_row][nm_e] -= 1
              A[e_constr_eq_row][nCp] -= av
              A[e_constr_eq_row][nCn] += av
 
         elif comp_type == 'F':
-             nIplus, nIminus, nCc, nCd, beta = elemento[1], elemento[2], elemento[3], elemento[4], elemento[5]
+             nIplus, nIminus, nCc_f, nCd_f, beta = elemento[1], elemento[2], elemento[3], elemento[4], elemento[5]
              f_idx = comp_indices['F'][comp_name]
 
              f_source_curr_var_col = f_src_curr_col_offset + f_idx
@@ -171,17 +169,17 @@ def insert_mna_stamps(n_max_node, mna_counts, componentes, comp_indices):
 
              A[nIplus][f_source_curr_var_col] += 1
              A[nIminus][f_source_curr_var_col] -= 1
-             A[nCc][f_control_curr_var_col] -= 1
-             A[nCd][f_control_curr_var_col] += 1
+             A[nCc_f][f_control_curr_var_col] -= 1
+             A[nCd_f][f_control_curr_var_col] += 1
 
              A[f_source_def_row][f_source_curr_var_col] += 1
              A[f_source_def_row][f_control_curr_var_col] -= beta
 
-             A[f_control_def_row][nCc] += 1
-             A[f_control_def_row][nCd] -= 1
+             A[f_control_def_row][nCc_f] += 1
+             A[f_control_def_row][nCd_f] -= 1
 
         elif comp_type == 'H':
-             nVplus, nVminus, nCc, nCd, rm = elemento[1], elemento[2], elemento[3], elemento[4], elemento[5]
+             nVplus, nVminus, nCc_h, nCd_h, rm = elemento[1], elemento[2], elemento[3], elemento[4], elemento[5]
              h_idx = comp_indices['H'][comp_name]
 
              h_source_curr_var_col = h_src_curr_col_offset + h_idx
@@ -192,98 +190,94 @@ def insert_mna_stamps(n_max_node, mna_counts, componentes, comp_indices):
 
              A[nVplus][h_source_curr_var_col] += 1
              A[nVminus][h_source_curr_var_col] -= 1
-             A[nCc][h_control_curr_var_col] -= 1
-             A[nCd][h_control_curr_var_col] += 1
+             A[nCc_h][h_control_curr_var_col] -= 1
+             A[nCd_h][h_control_curr_var_col] += 1
 
              A[h_source_def_row][nVplus] += 1
              A[h_source_def_row][nVminus] -= 1
              A[h_source_def_row][h_control_curr_var_col] -= rm
 
-             A[h_control_def_row][nCc] += 1
-             A[h_control_def_row][nCd] -= 1
+             A[h_control_def_row][nCc_h] += 1
+             A[h_control_def_row][nCd_h] -= 1
 
         elif comp_type == 'A':
-             na, nb, nc, nd, k1, k2, k3, k4, k5 = elemento[1], elemento[2], elemento[3], elemento[4], elemento[5], elemento[6], elemento[7], elemento[8], elemento[9]
+             na_a, nb_a, nc_a, nd_a, k1_a, k2_a, k3_a, k4_a, k5_a = elemento[1], elemento[2], elemento[3], elemento[4], elemento[5], elemento[6], elemento[7], elemento[8], elemento[9]
 
-             A[na][na] += k1
-             A[na][nb] -= k1
-             A[na][nc] += k2
-             A[na][nd] -= k2
-             b[na][0] -= k3
+             A[na_a][na_a] += k1_a
+             A[na_a][nb_a] -= k1_a
+             A[na_a][nc_a] += k2_a
+             A[na_a][nd_a] -= k2_a
+             b[na_a][0] -= k3_a
 
-             A[nb][na] -= k1
-             A[nb][nb] += k1
-             A[nb][nc] -= k2
-             A[nb][nd] += k2
-             b[nb][0] += k3
+             A[nb_a][na_a] -= k1_a
+             A[nb_a][nb_a] += k1_a
+             A[nb_a][nc_a] -= k2_a
+             A[nb_a][nd_a] += k2_a
+             b[nb_a][0] += k3_a
 
-             A[nc][na] += k4
-             A[nc][nb] -= k4
-             A[nc][nc] += k5
-             A[nc][nd] -= k5
+             A[nc_a][na_a] += k4_a
+             A[nc_a][nb_a] -= k4_a
+             A[nc_a][nc_a] += k5_a
+             A[nc_a][nd_a] -= k5_a
 
-             A[nd][na] -= k4
-             A[nd][nb] += k4
-             A[nd][nc] -= k5
-             A[nd][nd] += k5
+             A[nd_a][na_a] -= k4_a
+             A[nd_a][nb_a] += k4_a
+             A[nd_a][nc_a] -= k5_a
+             A[nd_a][nd_a] += k5_a
 
         elif comp_type == 'B':
-             na, nb, nc, nd, ne, nf = elemento[1], elemento[2], elemento[3], elemento[4], elemento[5], elemento[6]
-             k1, k2, k3, k4, k5, k6, k7, k8 = elemento[7], elemento[8], elemento[9], elemento[10], elemento[11], elemento[12], elemento[13], elemento[14]
+             na_b, nb_b, nc_b, nd_b, ne_b, nf_b, k1_b, k2_b, k3_b, k4_b, k5_b, k6_b, k7_b, k8_b = elemento[1], elemento[2], elemento[3], elemento[4], elemento[5], elemento[6], elemento[7], elemento[8], elemento[9], elemento[10], elemento[11], elemento[12], elemento[13], elemento[14]
              b_idx = comp_indices['B'][comp_name]
 
              b_ief_var_col = b_ief_curr_col_offset + b_idx
              b_vef_constr_row = b_constr_row_offset + b_idx
 
-             A[na][na] += k1
-             A[na][nb] -= k1
-             A[na][b_ief_var_col] += k2
+             A[na_b][na_b] += k1_b
+             A[na_b][nb_b] -= k1_b
+             A[na_b][b_ief_var_col] += k2_b
 
-             A[nb][na] -= k1
-             A[nb][nb] += k1
-             A[nb][b_ief_var_col] -= k2
+             A[nb_b][na_b] -= k1_b
+             A[nb_b][nb_b] += k1_b
+             A[nb_b][b_ief_var_col] -= k2_b
 
-             A[nc][na] += k3
-             A[nc][nb] -= k3
-             A[nc][nc] += k4
-             A[nc][nd] -= k4
-             b[nc][0] -= k5
+             A[nc_b][na_b] += k3_b
+             A[nc_b][nb_b] -= k3_b
+             A[nc_b][nc_b] += k4_b
+             A[nc_b][nd_b] -= k4_b
+             b[nc_b][0] -= k5_b
 
-             A[nd][na] -= k3
-             A[nd][nb] += k3
-             A[nd][nc] -= k4
-             A[nd][nd] += k4
-             b[nd][0] += k5
+             A[nd_b][na_b] -= k3_b
+             A[nd_b][nb_b] += k3_b
+             A[nd_b][nc_b] -= k4_b
+             A[nd_b][nd_b] += k4_b
+             b[nd_b][0] += k5_b
 
-             A[ne][b_ief_var_col] += 1
+             A[ne_b][b_ief_var_col] += 1
 
-             A[nf][b_ief_var_col] -= 1
+             A[nf_b][b_ief_var_col] -= 1
 
-             A[b_vef_constr_row][ne] += 1
-             A[b_vef_constr_row][nf] -= 1
-             A[b_vef_constr_row][na] -= k6
-             A[b_vef_constr_row][nb] += k6
-             A[b_vef_constr_row][nc] -= k7
-             A[b_vef_constr_row][nd] += k7
-             b[b_vef_constr_row][0] += k8
+             A[b_vef_constr_row][ne_b] += 1
+             A[b_vef_constr_row][nf_b] -= 1
+             A[b_vef_constr_row][na_b] -= k6_b
+             A[b_vef_constr_row][nb_b] += k6_b
+             A[b_vef_constr_row][nc_b] -= k7_b
+             A[b_vef_constr_row][nd_b] += k7_b
+             b[b_vef_constr_row][0] += k8_b
 
 
     A[0, :] = 0
     A[0, 0] = 1
     b[0, 0] = 0
 
-    return A, b
+    return A, b, n_max_node
 
 
 def main(netlist_filename):
-    componentes = criarListaComponentes(netlist_filename)
-
-    n_max_node, mna_counts, comp_indices = count_mna_info(componentes)
-
-    A, b = insert_mna_stamps(n_max_node, mna_counts, componentes, comp_indices)
+    A, b, n_max_node = insert_mna_stamps(netlist_filename)
 
     x = np.linalg.solve(A, b)
 
     e_nodais = x[1 : n_max_node + 1]
 
     return e_nodais.flatten()
+
