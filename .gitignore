@@ -1,44 +1,16 @@
-    # Ignora a pasta node_modules em qualquer subdiretório
 node_modules/
-
-
-    # Ignora pastas de build/compilação comuns (NestJS, TypeScript)
-    dist/
-    build/
-
-    # Ignora arquivos de variáveis de ambiente
-    .env
-    .env.*
-
-    # Ignora logs
-    *.log
-    logs/
-
-    # Ignora arquivos específicos do sistema operativo
-    .DS_Store
-    Thumbs.db
-
-    # Ignora arquivos de cache de editores/IDEs
-    .vscode/
-    .idea/
-
-    # Ignora arquivos específicos do Serverless Framework
-    .serverless/
-    .webpack/
-    .serverless-offline/
-
-    # Ignora arquivos específicos do Expo
-    .expo/
-    web-build/
-
-    # Ignora o arquivo de lock do npm se estiver a usar yarn ou pnpm
-    # package-lock.json
-
-    # Ignora o arquivo de lock do yarn se estiver a usar npm ou pnpm
-    # yarn.lock
-
-    # Ignora o arquivo de lock do pnpm se estiver a usar npm ou yarn
-    # pnpm-lock.yaml
-
-    # Se você tiver outros arquivos ou pastas que não devem ir para o repositório, adicione-os aqui.
-    
+dist/
+build/
+.env
+.env.*
+*.log
+logs/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.serverless/
+.webpack/
+.serverless-offline/
+.expo/
+web-build/
