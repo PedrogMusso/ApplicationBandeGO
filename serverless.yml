@@ -1,0 +1,57 @@
+service: bandego
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:Query
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:BatchGetItem
+            - dynamodb:BatchWriteItem
+          Resource:
+            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-data-table"
+            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:service}-iot-data/index/*" # Permissão para GSIs
+
+functions:
+  newImage:
+    handler: /src/newImage/index.handler
+    events:
+      - http:
+          path: /newImage
+          method: post
+    environment:
+      DATA_TABLE: data-table
+  getCount:
+    handler: /src/getCount/index.handler
+    events:
+      - http:
+          path: /getCount
+          method: get
+    environment:
+      DATA_TABLE: data-table
+
+resources:
+  Resources:
+    DataTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-data-table
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    ImageBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:service}-image-bucket
