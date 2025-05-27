@@ -134,7 +134,7 @@ export function LocationSelector({ onSelection }: LocationSelectorProps) {
     <View className="w-full items-center p-4">
       <TouchableOpacity
         onPress={openLocationsSheet}
-        className="p-3 bg-blue-500 rounded-md"
+        className="p-3 bg-[#FF8A37] rounded-md"
       >
         <Text className="text-white text-base">
           {currentSelectedLocationId && currentSelectedDay

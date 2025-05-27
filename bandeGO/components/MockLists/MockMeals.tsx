@@ -29,8 +29,8 @@ export interface Location {
 
 export const restaurantData: Location[] = [
   {
-    id: "restaurante-sabor-caseiro",
-    name: "Restaurante Sabor Caseiro",
+    id: "central",
+    name: "central",
     address: "Rua das Flores, 123 - Centro",
     cuisine: "Comida Caseira",
     dailyMenus: [
@@ -88,8 +88,8 @@ export const restaurantData: Location[] = [
     ],
   },
   {
-    id: "cantina-italiana",
-    name: "Cantina Italiana",
+    id: "ct-ct2",
+    name: "CT, CT2",
     address: "Avenida Principal, 456 - Bairro Antigo",
     cuisine: "Italiana",
     dailyMenus: [

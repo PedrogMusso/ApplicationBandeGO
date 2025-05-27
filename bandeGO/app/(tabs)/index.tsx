@@ -1,28 +1,32 @@
-// screens/HomeScreen.tsx (ou onde seu HomeScreen está)
-import React, { useState, useCallback } from "react"; // Importar useState e useCallback
-import { View, Text } from "react-native"; // Importar View e Text
+import React, { useState, useCallback, useEffect, useTransition } from "react";
+import { View, Text } from "react-native";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { FoodCard } from "@/components/FoodCard";
-import { LocationSelector } from "@/components/ui/locationSelect"; // Seu LocationSelector
+import { LocationSelector } from "@/components/ui/locationSelect";
 import {
   MealItem,
   DayOfWeek,
   restaurantData,
-} from "@/components/MockLists/MockMeals"; // Suas interfaces
+} from "@/components/MockLists/MockMeals";
+import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
+import axios from "axios";
 
 export default function HomeScreen() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     null
   );
   const [selectedDay, setSelectedDay] = useState<DayOfWeek | null>(null);
+  const [count, setCount] = useState<number | null>(0);
+  const [isPending, startTransition] = useTransition();
 
   // Função para ser passada para LocationSelector para receber a seleção
   const handleLocationAndDaySelection = useCallback(
     (locationId: string | null, day: DayOfWeek | null) => {
       setSelectedLocationId(locationId);
       setSelectedDay(day);
+      console.log(locationId, day);
     },
     []
   );
@@ -46,13 +50,53 @@ export default function HomeScreen() {
     return dailyMenu ? dailyMenu.menuItems : [];
   }, [selectedLocationId, selectedDay]); // Depende dos estados selecionados
 
+  //após o usuário confirmar a localização, buscaremos o valor de uma requisição no banco de dados
+  const handleLocationConfirmed = useCallback(async () => {
+    if (!selectedLocationId) return;
+
+    let data = {
+      locationId: selectedLocationId,
+    };
+
+    try {
+      const response = await axios.get("/contagem", {
+        params: data,
+      });
+      startTransition(() => {
+        setCount(response.data.count);
+      });
+    } catch (error) {
+      console.error("Erro ao buscar contagem:", error);
+      startTransition(() => {
+        setCount(0);
+      });
+    }
+  }, [selectedLocationId]);
+
+  useEffect(() => {
+    if (selectedLocationId && selectedDay) {
+      handleLocationConfirmed();
+    }
+  }, [selectedLocationId, selectedDay, handleLocationConfirmed]);
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
     >
       <ThemedView styleProps="flex w-full flex-col items-center py-8">
         <ThemedText type="title">Bem-vindo!</ThemedText>
-        {/* Aqui você pode adicionar um título ou mensagem de boas-vindas */}
+        <Button
+          action="primary"
+          variant="solid"
+          isDisabled={isPending}
+          className="mt-4"
+        >
+          {isPending ? (
+            <ButtonSpinner />
+          ) : (
+            <ButtonText>Total: {count ?? "N/A"}</ButtonText>
+          )}
+        </Button>
       </ThemedView>
 
       <ThemedView styleProps="flex flex-col w-full items-center justify-center p-4">
