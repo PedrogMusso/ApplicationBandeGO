@@ -42,13 +42,6 @@ export default function TabLayout() {
           tabBarIcon: HomeTabIcon, // Agora passamos a referência da função
         }}
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: "Explore",
-          tabBarIcon: ExploreTabIcon, // Agora passamos a referência da função
-        }}
-      />
     </Tabs>
   );
 }

@@ -11,7 +11,8 @@ import {
   restaurantData,
 } from "@/components/MockLists/MockMeals";
 import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
-import axios from "axios";
+import { api } from "@/services/api";
+import { Icon, RepeatIcon } from "@/components/ui/icon";
 
 export default function HomeScreen() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
@@ -21,20 +22,42 @@ export default function HomeScreen() {
   const [count, setCount] = useState<number | null>(0);
   const [isPending, startTransition] = useTransition();
 
-  // Função para ser passada para LocationSelector para receber a seleção
+  const formatTime = (totalSeconds: number | null) => {
+    // Se o tempo for 0 ou inválido, exibe "0 segundos"
+    if (!totalSeconds || totalSeconds <= 0) {
+      return "0 segundos";
+    }
+
+    // Calcula os minutos e segundos
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    // Monta as partes do texto
+    const minutesText =
+      minutes > 0 ? `${minutes} minuto${minutes > 1 ? "s" : ""}` : "";
+    const secondsText =
+      seconds > 0 ? `${seconds} segundo${seconds > 1 ? "s" : ""}` : "";
+
+    // Junta as partes com "e" se ambas existirem
+    if (minutesText && secondsText) {
+      return `${minutesText} e ${secondsText}`;
+    }
+
+    // Retorna apenas a parte que existe
+    return minutesText || secondsText;
+  };
+
   const handleLocationAndDaySelection = useCallback(
     (locationId: string | null, day: DayOfWeek | null) => {
       setSelectedLocationId(locationId);
       setSelectedDay(day);
-      console.log(locationId, day);
     },
     []
   );
 
-  // Encontrar o menu do dia e local selecionados
   const currentMenu: MealItem[] = React.useMemo(() => {
     if (!selectedLocationId || !selectedDay) {
-      return []; // Retorna um array vazio se nada estiver selecionado
+      return [];
     }
 
     const location = restaurantData.find(
@@ -48,22 +71,17 @@ export default function HomeScreen() {
       (dm) => dm.dayOfWeek === selectedDay
     );
     return dailyMenu ? dailyMenu.menuItems : [];
-  }, [selectedLocationId, selectedDay]); // Depende dos estados selecionados
+  }, [selectedLocationId, selectedDay]);
 
-  //após o usuário confirmar a localização, buscaremos o valor de uma requisição no banco de dados
   const handleLocationConfirmed = useCallback(async () => {
     if (!selectedLocationId) return;
 
-    let data = {
-      locationId: selectedLocationId,
-    };
-
     try {
-      const response = await axios.get("/contagem", {
-        params: data,
-      });
+      const response = await api.get("/getCount");
+      console.log("Contagem recebida:", response.data);
+      const totalSeconds = response.data.count * 15;
       startTransition(() => {
-        setCount(response.data.count);
+        setCount(totalSeconds);
       });
     } catch (error) {
       console.error("Erro ao buscar contagem:", error);
@@ -85,30 +103,48 @@ export default function HomeScreen() {
     >
       <ThemedView styleProps="flex w-full flex-col items-center py-8">
         <ThemedText type="title">Bem-vindo!</ThemedText>
-        <Button
-          action="primary"
-          variant="solid"
-          isDisabled={isPending}
-          className="mt-4"
-        >
-          {isPending ? (
-            <ButtonSpinner />
-          ) : (
-            <ButtonText>Total: {count ?? "N/A"}</ButtonText>
-          )}
-        </Button>
+        {selectedLocationId ? (
+          <ThemedView styleProps="flex flex-row items-center justify-between w-full">
+            <Button className="mt-4 h-16 flex text-center justify-center items-center w-[80%] bg-[#FF8A37]">
+              {isPending ? (
+                <ButtonSpinner />
+              ) : (
+                <ButtonText
+                  style={{
+                    height: 56,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 16,
+                  }}
+                >
+                  {selectedLocationId
+                    ? `Tempo para ser atendido: ${formatTime(count)}`
+                    : ""}
+                </ButtonText>
+              )}
+            </Button>
+            <Button
+              onPress={handleLocationConfirmed}
+              isDisabled={isPending}
+              className="mt-4 bg-[#FF8A37] h-16"
+            >
+              <Icon as={RepeatIcon} />
+            </Button>
+          </ThemedView>
+        ) : (
+          <></>
+        )}
       </ThemedView>
 
       <ThemedView styleProps="flex flex-col w-full items-center justify-center p-4">
         <ThemedText className="text-xl font-bold mb-4">
           Opção de Bandeijão
         </ThemedText>
-        {/* Passamos a função de callback para o LocationSelector */}
         <LocationSelector onSelection={handleLocationAndDaySelection} />
 
-        {/* Exibir o menu selecionado */}
         {selectedLocationId && selectedDay && currentMenu.length > 0 ? (
-          <ThemedView styleProps="flex flex-col w-full">
+          <ThemedView styleProps="flex flex-col w-full justify-center items-center">
             <ThemedText className="text-lg font-semibold mb-4">
               Menu de{" "}
               {restaurantData.find((l) => l.id === selectedLocationId)?.name}{" "}
@@ -116,7 +152,7 @@ export default function HomeScreen() {
             </ThemedText>
             {currentMenu.map((meal, index) => (
               <FoodCard
-                key={`${selectedLocationId}-${selectedDay}-${index}`} // Chave única
+                key={`${selectedLocationId}-${selectedDay}-${index}`}
                 title={meal.title}
                 description={meal.description}
                 notes={meal.notes}

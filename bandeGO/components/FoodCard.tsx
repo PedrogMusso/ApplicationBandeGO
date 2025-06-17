@@ -35,7 +35,7 @@ export function FoodCard({
           <Text className="text-gray-500 text-xs">Sem imagem</Text> // Placeholder mais informativo
         )}
       </View>
-      <View className="flex flex-col flex-grow p-3 justify-center">
+      <View className="flex flex-col w-full flex-1 p-3 justify-center">
         {/* flex-grow para ocupar o espaço restante, p-3 para padding */}
         {title && (
           <Text className="text-lg font-bold text-gray-800 mb-1">{title}</Text>
